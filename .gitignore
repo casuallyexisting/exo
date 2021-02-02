@@ -1,0 +1,21 @@
+## Main .gitignore File
+
+# Personal Information
+avsrc/*
+logs/*
+depot/*
+config/*
+
+# Models
+model_*/
+videoEngine/checkpoints/*
+
+# Insecured Files
+core.py
+
+# Local Files
+__pycache__/
+venv/
+
+# Other
+external_files/*
