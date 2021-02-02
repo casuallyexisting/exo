@@ -10,12 +10,10 @@ config/*
 model_*/
 videoEngine/checkpoints/*
 
-# Insecured Files
-core.py
-
 # Local Files
 __pycache__/
 venv/
-
-# Other
 external_files/*
+
+# Private Files
+utils/private_functions.py
