@@ -13,6 +13,7 @@ import core
 
 core.init()
 core.chat('Hey!', userid)
+>>> 'How are you?'
 ```
 userid is used to enable holding a conversation with multiple people, while remembering the context of the conversation.
 ### Telegram Integration
