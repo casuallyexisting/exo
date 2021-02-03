@@ -42,8 +42,8 @@ from transformers import (
 )
 
 custom_player = coreConfig['custom_player']
-opped_users = coreConfig['opped_users']
-priveliged_users = coreConfig['priveliged_users']
+sudoers = coreConfig['sudoers']
+operators = coreConfig['operators']
 
 current_history = {}
 user_status = {}
@@ -215,14 +215,14 @@ def chat(custom_input, user_id):
     if chatlogging:
         log(player + ': ' + str(cur_input))
 
-    if cur_input == "sudo" and user_id in opped_users:
+    if cur_input == "sudo" and user_id in sudoers:
         user_status[user_id]['debug'] = not user_status[user_id]['debug']
         if user_status[user_id]['debug']:
             stat_db = 'Enabled'
         else:
             stat_db = 'Disabled'
         return "Sudo is now {}".format(stat_db)
-    elif cur_input == "sudo" and user_id not in opped_users:
+    elif cur_input == "sudo" and user_id not in sudoers:
         return "Permission Denied."
 
     if user_status[user_id]['debug']:

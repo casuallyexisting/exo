@@ -30,12 +30,7 @@ bot = Bot(telegramToken)
 # context. Error handlers also receive the raised TelegramError object in error.
 def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    update.message.reply_text('Hi!')
-
-
-def help_command(update: Update, context: CallbackContext) -> None:
-    """Send a message when the command /help is issued."""
-    update.message.reply_text('Help!')
+    update.message.reply_text('Hi! Please only send single messages.')
 
 def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
@@ -48,7 +43,7 @@ def echo(update: Update, context: CallbackContext) -> None:
         except Exception as e:
             print(e)
             ai_response = 'An error occured. Please try again later.'
-            if str(update.message.from_user.id) in core.opped_users:
+            if str(update.message.from_user.id) in core.sudoers:
                 ai_response = ai_response + '\n' + str(e)
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     update.message.reply_text(str(ai_response))
@@ -65,8 +60,6 @@ def main():
 
     # on different commands - answer in Telegram
     dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CommandHandler("help", help_command))
-
     # on noncommand i.e message - echo the message on Telegram
     dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
 
