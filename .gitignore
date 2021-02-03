@@ -16,4 +16,4 @@ venv/
 external_files/*
 
 # Private Files
-utils/private_functions.py
+private_functions.py

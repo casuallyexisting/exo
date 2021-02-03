@@ -18,27 +18,14 @@
 """
 
 from config.rxConfig import coreConfig
-
-##
-# User variables
-custom_player = coreConfig['custom_player']
-opped_users = coreConfig['opped_users']
-priveliged_users = coreConfig['priveliged_users']
-##
-
-
 import argparse
 import logging
-from utils.private_functions import sudoer, firewall
 import numpy as np
 import torch
-
 import random
 from datetime import datetime
 import time
-
 import json
-
 from transformers import (
     CTRLLMHeadModel,
     CTRLTokenizer,
@@ -54,6 +41,14 @@ from transformers import (
     XLNetTokenizer,
 )
 
+custom_player = coreConfig['custom_player']
+opped_users = coreConfig['opped_users']
+priveliged_users = coreConfig['priveliged_users']
+
+current_history = {}
+user_status = {}
+running = True
+chatlogging = True
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s", datefmt="%m/%d/%Y %H:%M:%S", level=logging.WARNING,
@@ -61,7 +56,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MAX_LENGTH = int(10000)  # Hardcoded max length to avoid infinite loop
-
 MODEL_CLASSES = {
     "gpt2": (GPT2LMHeadModel, GPT2Tokenizer),
     "ctrl": (CTRLLMHeadModel, CTRLTokenizer),
@@ -85,26 +79,15 @@ man is chased outside and beaten. Twenty years later, Rasputin sees a vision of
 the Virgin Mary, prompting him to become a priest. Rasputin quickly becomes famous,
 with people, even a bishop, begging for his blessing. <eod> </s> <eos>"""
 
-
 def set_seed(args):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     if args.n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
 
-##########
-#HOMEBREW#
-##########
-
 def set_seed_int(new_seed):
     np.random.seed(new_seed)
     torch.manual_seed(new_seed)
-
-
-#
-# Functions to prepare models' input
-#
-
 
 def prepare_ctrl_input(args, _, tokenizer, prompt_text):
     if args.temperature > 0.7:
@@ -115,10 +98,7 @@ def prepare_ctrl_input(args, _, tokenizer, prompt_text):
         logger.info("WARNING! You are not starting your generation from a control code so you won't get good results")
     return prompt_text
 
-
 def prepare_xlm_input(args, model, tokenizer, prompt_text):
-    # kwargs = {"language": None, "mask_token_id": None}
-
     # Set the language
     use_lang_emb = hasattr(model.config, "use_lang_emb") and model.config.use_lang_emb
     if hasattr(model.config, "lang2id") and use_lang_emb:
@@ -131,26 +111,15 @@ def prepare_xlm_input(args, model, tokenizer, prompt_text):
                 language = input("Using XLM. Select language in " + str(list(available_languages)) + " >>> ")
 
         model.config.lang_id = model.config.lang2id[language]
-        # kwargs["language"] = tokenizer.lang2id[language]
-
-    # TODO fix mask_token_id setup when configurations will be synchronized between models and tokenizers
-    # XLM masked-language modeling (MLM) models need masked token
-    # is_xlm_mlm = "mlm" in args.model_name_or_path
-    # if is_xlm_mlm:
-    #     kwargs["mask_token_id"] = tokenizer.mask_token_id
-
     return prompt_text
-
 
 def prepare_xlnet_input(args, _, tokenizer, prompt_text):
     prompt_text = (args.padding_text if args.padding_text else PADDING_TEXT) + prompt_text
     return prompt_text
 
-
 def prepare_transfoxl_input(args, _, tokenizer, prompt_text):
     prompt_text = (args.padding_text if args.padding_text else PADDING_TEXT) + prompt_text
     return prompt_text
-
 
 PREPROCESSING_FUNCTIONS = {
     "ctrl": prepare_ctrl_input,
@@ -158,7 +127,6 @@ PREPROCESSING_FUNCTIONS = {
     "xlnet": prepare_xlnet_input,
     "transfo-xl": prepare_transfoxl_input,
 }
-
 
 def adjust_length_to_model(length, max_sequence_length):
     if length < 0 and max_sequence_length > 0:
@@ -170,113 +138,67 @@ def adjust_length_to_model(length, max_sequence_length):
     return length
 
 def init():
+    global args, usernames, player, tokenizer, model, launchTime, personality, model_type, model_name_or_path
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--model_type",
-        default=None,
-        type=str,
-        required=False,
-        help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
-    )
-    parser.add_argument(
-        "--model_name_or_path",
-        default=None,
-        type=str,
-        required=False,
-        help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
-    )
-
+    parser.add_argument("--model_type", default=None, type=str, required=False, help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
+    parser.add_argument("--model_name_or_path", default=None, type=str, required=False, help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
     parser.add_argument("--length", type=int, default=20)
     parser.add_argument("--stop_token", type=str, default=None, help="Token at which text generation is stopped")
-
-    parser.add_argument(
-        "--temperature",
-        type=float,
-        default=1.0,
-        help="temperature of 1.0 has no effect, lower tend toward greedy sampling",
-    )
-    parser.add_argument(
-        "--repetition_penalty", type=float, default=1.0, help="primarily useful for CTRL model; in that case, use 1.2"
-    )
+    parser.add_argument("--temperature", type=float, default=1.0, help="temperature of 1.0 has no effect, lower tend toward greedy sampling")
+    parser.add_argument("--repetition_penalty", type=float, default=1.0, help="primarily useful for CTRL model; in that case, use 1.2")
     parser.add_argument("--k", type=int, default=0)
     parser.add_argument("--p", type=float, default=0.9)
-
     parser.add_argument("--padding_text", type=str, default="", help="Padding text for Transfo-XL and XLNet.")
     parser.add_argument("--xlm_language", type=str, default="", help="Optional language when used with the XLM model.")
-
     parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
     parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
     parser.add_argument("--num_return_sequences", type=int, default=1, help="The number of samples to generate.")
 
-    #HOMEBREW
     config = json.load(open("config/generation_config.json"))
-    #this line is like magic to me
     parser.set_defaults(**config)
-    global args
     args = parser.parse_args()
-
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
     print('using device ' + str(args.device))
-
     set_seed(args)
 
-    ##################
-    #HOMEBREW CONTENT#
-    ##################
-    #booting up usernames
-    global usernames
     usernames = []
     with open(args.model_name_or_path + "Usernames.txt") as users_file:
         for line in users_file.read().splitlines():
             usernames.append(line)
-    global player # For rx0
     player = ""
     try:
         player = custom_player
     except:
         raise ValueError('Character not in config.')
-
-
     # Initialize the model and tokenizer
     try:
         args.model_type = args.model_type.lower()
         model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     except KeyError:
         raise KeyError("the model {} you specified is not supported. You are welcome to add it and open a PR :)")
-
-
-    global tokenizer
-    global model
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path)
     model = model_class.from_pretrained(args.model_name_or_path)
     model.to(args.device)
-
     args.length = adjust_length_to_model(args.length, max_sequence_length=model.config.max_position_embeddings)
     logger.info(args)
-    global launchTime
+
     launchTime = time.strftime('%Y-%m-%d_%H.%M.%S')
-    global personality
     personality = ''
     for name in usernames:
         if name != player:
             personality += name + ', '
-
-
-################
-#BEGIN HOMEBREW#
-################
-
-current_history = {}
-user_status = {}
-running = True
-chatlogging = True
+    model_type = args.model_type
+    model_name_or_path = args.model_name_or_path
+    global sudoer, firewall
+    from private_functions import sudoer, firewall
 
 def log(log_input):
     with open("logs/log_{}.rx0".format(launchTime), 'a+', encoding='utf-8') as file:
         file.write(log_input + '\n')
 
 def chat(custom_input, user_id):
+    global current_history, chatlogging
     prompt_text = ''
     try:
         temp = user_status[user_id]['status']
@@ -289,13 +211,10 @@ def chat(custom_input, user_id):
         print('[' + user_id + ' > AI] ' + custom_input)
 
     current_debug = ''
-    global current_history
-    global chatlogging
     cur_input = custom_input
     if chatlogging:
         log(player + ': ' + str(cur_input))
 
-    #activate debug mode if necessary
     if cur_input == "sudo" and user_id in opped_users:
         user_status[user_id]['debug'] = not user_status[user_id]['debug']
         if user_status[user_id]['debug']:
@@ -325,18 +244,15 @@ def chat(custom_input, user_id):
         print('New chat started with user', user_id)
         pass
 
-     if cur_input != firewall(cur_input):
+    if cur_input != firewall(cur_input):
          return firewall(cur_input)
-
     #if it's blank, don't add anything (let the AI keep talking)
     if cur_input != "":
         prompt_text += (player + ": " + cur_input)
         prompt_text += "\n"
-
     #trim lengthy inputs (basically rolling memory)
     if len(prompt_text) > 1000:
         prompt_text = prompt_text[len(prompt_text)-1000:]
-
     # Different models need different input formatting and/or extra arguments
     requires_preprocessing = args.model_type in PREPROCESSING_FUNCTIONS.keys()
     if requires_preprocessing:
@@ -374,35 +290,27 @@ def chat(custom_input, user_id):
         do_sample=True,
         num_return_sequences=args.num_return_sequences,
     )
-
     # Remove the batch dimension when returning multiple sequences
     if len(output_sequences.shape) > 2:
         output_sequences.squeeze_()
 
     generated_sequences = []
-
     for generated_sequence_idx, generated_sequence in enumerate(output_sequences):
         generated_sequence = generated_sequence.tolist()
-
         # Decode text
         text = tokenizer.decode(generated_sequence, clean_up_tokenization_spaces=True)
-
         # Remove all text after the stop token
         text = text[: text.find(args.stop_token) if args.stop_token else None]
-
         # combine prompt w/ output. Only use first line of output response. clean up padding text
-
         #all the lines of ai text
         ai_lines = text[len(tokenizer.decode(encoded_prompt[0], clean_up_tokenization_spaces=True)) :].splitlines()
         if user_status[user_id]['debug']:
             current_debug = current_debug + "\n\nDEBUG -\nAI OUTPUT LINES:"
             current_debug = current_debug + str(ai_lines)
-
         #AI often starts with a new line for some reason
         if ai_lines[0] == "":
             ai_lines = ai_lines[1:]
-        #check if the AI responded as someone else
-        #if so, append the response
+        #check if the AI responded as someone else; if so, append the response
         done = 0
         for line in ai_lines:
             for user in usernames:
@@ -416,10 +324,8 @@ def chat(custom_input, user_id):
         if chatlogging:
             log('No Response :(')
         return "No response :("
-
-    #if choice != len(generated_sequences):
+    # Prompt text formatting
     prompt_text += generated_sequences[0]
-    #add a newline for the next stuff being appended
     prompt_text += "\n"
     current_history[user_id] = prompt_text
 
@@ -438,6 +344,7 @@ def chat(custom_input, user_id):
             user_status[user_id]['status'] = 'Normal'
         print('[AI > ' + user_id + '] BEAM OUTPUT:\n' + returned_response)
         return 'BEAM OUTPUT (' + str(len(generated_sequences)) + ' reponses generated):\n' + returned_response
+
     print('[AI > ' + user_id + '] ' + returned_response[1])
     returned_response = str(returned_response[1]) + str(current_debug)
     return returned_response

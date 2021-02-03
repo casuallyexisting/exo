@@ -12,11 +12,11 @@ bot.
 from config.rxConfig import telegram as telegram_config
 telegramToken = telegram_config['telegram-token']
 import core
-
 import logging
-
 from telegram import Update, Bot, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+
+debug = False
 
 # Enable logging
 logging.basicConfig(
@@ -40,13 +40,16 @@ def help_command(update: Update, context: CallbackContext) -> None:
 def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
-    try:
+    if debug:
         ai_response = core.chat(str(update.message.text), str(update.message.from_user.id))
-    except Exception as e:
-        print(e)
-        ai_response = 'An error occured. Please try again later.'
-        if str(update.message.from_user.id) in core.opped_users:
-            ai_response = ai_response + '\n' + str(e)
+    else:
+        try:
+            ai_response = core.chat(str(update.message.text), str(update.message.from_user.id))
+        except Exception as e:
+            print(e)
+            ai_response = 'An error occured. Please try again later.'
+            if str(update.message.from_user.id) in core.opped_users:
+                ai_response = ai_response + '\n' + str(e)
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     update.message.reply_text(str(ai_response))
 
