@@ -139,6 +139,7 @@ def adjust_length_to_model(length, max_sequence_length):
 
 def init():
     global args, usernames, player, tokenizer, model, launchTime, personality, model_type, model_name_or_path
+    global device
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", default=None, type=str, required=False, help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
     parser.add_argument("--model_name_or_path", default=None, type=str, required=False, help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(MODEL_CLASSES.keys()))
@@ -190,8 +191,9 @@ def init():
             personality += name + ', '
     model_type = args.model_type
     model_name_or_path = args.model_name_or_path
+    device = args.device
     global sudoer, firewall
-    from private_functions import sudoer, firewall
+    from intercept import sudoer, firewall
 
 def log(log_input):
     with open("logs/log_{}.rx0".format(launchTime), 'a+', encoding='utf-8') as file:

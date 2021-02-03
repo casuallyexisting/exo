@@ -14,6 +14,3 @@ videoEngine/checkpoints/*
 __pycache__/
 venv/
 external_files/*
-
-# Private Files
-private_functions.py
