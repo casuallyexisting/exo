@@ -160,7 +160,7 @@ def init():
     args = parser.parse_args()
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
-    print('using device ' + str(args.device))
+    print('Core using device ' + str(args.device))
     set_seed(args)
 
     usernames = []

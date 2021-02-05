@@ -77,7 +77,7 @@ def sudoer(command, user_id):
         return "Invalid Command: exit sudo to chat, or run 'help' to list commands."
 
 ## Firewall Functions
-from intercept import *
+from content_filter import *
 import random
 def firewall(cur_input):
     from config.rxConfig import coreConfig

@@ -11,6 +11,7 @@ bot.
 
 from config.rxConfig import telegram as telegram_config
 telegramToken = telegram_config['telegram-token']
+botUpdatesChannel = telegram_config['botupdates']
 import core
 import logging
 from telegram import Update, Bot, ChatAction
@@ -42,6 +43,8 @@ def echo(update: Update, context: CallbackContext) -> None:
             ai_response = core.chat(str(update.message.text), str(update.message.from_user.id))
         except Exception as e:
             print(e)
+            updateMessage = 'ERROR: ' + str(e)
+            bot.send_message(botUpdatesChannel, text=updateMessage)
             ai_response = 'An error occured. Please try again later.'
             if str(update.message.from_user.id) in core.sudoers:
                 ai_response = ai_response + '\n' + str(e)
@@ -70,6 +73,7 @@ def main():
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
     print('Ready.')
+    bot.send_message(botUpdatesChannel, text="Online.")
     updater.idle()
 
 

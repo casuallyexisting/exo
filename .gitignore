@@ -7,6 +7,7 @@ depot/*
 config/*
 
 # Models
+old_models/
 model_*/
 videoEngine/checkpoints/*
 

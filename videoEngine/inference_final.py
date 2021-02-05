@@ -1,3 +1,7 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from os import listdir, path
 import numpy as np
 import scipy, cv2, os, sys, argparse
@@ -160,7 +164,7 @@ def datagen(frames, mels):
 
 mel_step_size = 16
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-print('Using {} for inference.'.format(device))
+print('videoEngine Using {} for inference.'.format(device))
 
 def _load(checkpoint_path):
 	if device == 'cuda':

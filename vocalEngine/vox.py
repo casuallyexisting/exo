@@ -1,3 +1,7 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from vocalEngine.encoder.params_model import model_embedding_size as speaker_embedding_size
 from vocalEngine.utils.argutils import print_args
 from vocalEngine.utils.modelutils import check_model_paths
@@ -13,24 +17,27 @@ import torch
 import sys
 from audioread.exceptions import NoBackendError
 
+# pretrained, lys_model
+model = 'lys_model'
+
 def generate(audio, speech):
     ## Info & args
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument("-e", "--enc_model_fpath", type=Path,
-                        default="vocalEngine/encoder/saved_models/pretrained.pt",
+                        default="vocalEngine/encoder/saved_models/{}.pt".format(model),
                         help="Path to a saved encoder")
     parser.add_argument("-s", "--syn_model_dir", type=Path,
                         default="vocalEngine/synthesizer/saved_models/logs-pretrained/",
                         help="Directory containing the synthesizer model")
     parser.add_argument("-v", "--voc_model_fpath", type=Path,
-                        default="vocalEngine/vocoder/saved_models/pretrained/pretrained.pt",
+                        default="vocalEngine/vocoder/saved_models/{}/{}.pt".format(model, model),
                         help="Path to a saved vocoder")
-    parser.add_argument("--low_mem", action="store_true", help=\
+    parser.add_argument("--low_mem", action="store_true", default=True, help=\
         "If True, the memory used by the synthesizer will be freed after each use. Adds large "
         "overhead but allows to save some GPU memory for lower-end GPUs.")
-    parser.add_argument("--no_sound", action="store_true", help=\
+    parser.add_argument("--no_sound", action="store_true", default=True, help=\
         "If True, audio won't be played.")
     parser.add_argument("--seed", type=int, default=None, help=\
         "Optional random number seed value to make toolbox deterministic.")
