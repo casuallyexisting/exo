@@ -4,7 +4,9 @@
 avsrc/*
 logs/*
 depot/*
-config/*
+config/generation_config.json
+config/rxConfig.py
+config/training_config.json
 
 # Models
 old_models/

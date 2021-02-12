@@ -1,0 +1,11 @@
+{
+    "model_type": "gpt2",
+    "model_name_or_path": "<Path to your model>",
+    "temperature": 6e-1,
+    "repetition_penalty": 12e-1,
+    "k": 50,
+    "length": 128,
+    "seed": 209392,
+    "num_return_sequences": 7,
+    "no_cuda": 0
+}
