@@ -1,5 +1,7 @@
 # Exo
 
+*The jankiest project you ever did see*
+
 Exo is a framework for training an AGI chatbot. It implements many different neural nets, including voice synthesis, video synthesis, and (obviously) text generation.
 
 ## Installation
