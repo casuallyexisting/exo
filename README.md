@@ -8,7 +8,8 @@ Exo is a framework for training an AGI chatbot. It implements many different neu
 
 Not currently available.
 
-## Usage
+## Usage 
+*Still working on making everything user-friendly*
 
 ```python
 import core
