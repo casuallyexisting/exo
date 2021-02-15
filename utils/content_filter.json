@@ -1,0 +1,23 @@
+{
+    "intercepted_messages": {
+        "what's your name?": "You can call me Casual.",
+        "what's your name": "You can call me Casual.",
+        "whats your name?": "You can call me Casual.",
+        "whats your name": "You can call me Casual.",
+        "who are you?": "You can call me Casual.",
+        "who are you": "You can call me Casual."
+    },
+
+    "banned_phrases": [
+        "name",
+        "old//you",
+        "age//you",
+        "your//address"
+        ],
+
+    "responses_to_banned_inputs": [
+        "I'm not comfortable answering that",
+        "Please don't ask me that",
+        "I don't wanna answer that"
+    ]
+}
