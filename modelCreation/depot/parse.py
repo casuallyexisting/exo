@@ -1,6 +1,6 @@
 import csv
 
-imsg_files = ['mac_log.csv','hja_log.csv','br_log.csv','cbc_log.csv','sklog.csv','zm_log.csv']
+imsg_files = []
 discord_files = []
 
 def parse_imsg_csv(files):
