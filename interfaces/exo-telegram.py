@@ -9,15 +9,20 @@ Press Ctrl-C on the command line or send a signal to the process to stop the
 bot.
 """
 
-from config.rxConfig import telegram as telegram_config
+import json
+config = json.load(open("../config/rxConfig.json"))
+telegram_config = config['telegram_config']
 telegramToken = telegram_config['telegram-token']
 botUpdatesChannel = telegram_config['botupdates']
-import core
 import logging
 from telegram import Update, Bot, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import socket
 
-debug = False
+debug = True
+
+HOST = "127.0.0.1"
+PORT = 25077
 
 # Enable logging
 logging.basicConfig(
@@ -37,16 +42,28 @@ def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     if debug:
-        ai_response = core.chat(str(update.message.text), str(update.message.from_user.id))
+        sock = socket.socket()
+        sock.connect((HOST, PORT))
+        outbound_message = 'TELEGRAM-{}://'.format(str(update.message.from_user.id)) + update.message.text
+        sock.sendall(outbound_message.encode('utf-8'))
+        data = sock.recv(16384)
+        ai_response = data.decode()
+        sock.close()
     else:
         try:
-            ai_response = core.chat(str(update.message.text), str(update.message.from_user.id))
+            sock = socket.socket()
+            sock.connect((HOST, PORT))
+            outbound_message = 'TELEGRAM-{}://'.format(str(update.message.from_user.id)) + update.message.text
+            sock.sendall(outbound_message.encode('utf-8'))
+            data = sock.recv(16384)
+            ai_response = data.decode()
+            sock.close()
         except Exception as e:
             print(e)
             updateMessage = 'ERROR: ' + str(e)
             bot.send_message(botUpdatesChannel, text=updateMessage)
             ai_response = 'An error occured. Please try again later.'
-            if str(update.message.from_user.id) in core.sudoers:
+            if str(update.message.from_user.id) in config['coreConfig']['sudoers']:
                 ai_response = ai_response + '\n' + str(e)
     bot.send_chat_action(chat_id=update.message.chat_id, action=ChatAction.TYPING)
     update.message.reply_text(str(ai_response))
@@ -78,5 +95,4 @@ def main():
 
 
 if __name__ == '__main__':
-    core.init()
     main()

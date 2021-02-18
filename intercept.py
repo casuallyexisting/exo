@@ -1,7 +1,11 @@
+## logging
+import logging
+logger = logging.getLogger(__name__)
+
 ## Command Functions
 priveliged_commands = ['core','globalhistory', 'userstatus', 'g-clearchat']
-def help(user_id):
-    from core import operators
+def help(user_id, operators):
+    #from core import operators
     message = """Sudo commands:
 - help : Lists commands
 - sudo : Activates operator mode
@@ -22,15 +26,15 @@ def help(user_id):
 - g-clearchat : Clears all current chats"""
     return message
 
-def sudoer(command, user_id):
-    from core import user_status, current_history, personality, player, model_type, model_name_or_path, operators, device
+def sudoer(command, user_id, user_status, current_history, personality, player, config, operators, device):
+    #from core import user_status, current_history, personality, player, config, operators, device
     # External Commands
     if command == "help":
-        return help(user_id)
+        return help(user_id, operators)
     # Operator Commands
     if command in priveliged_commands and user_id in operators:
         if command == 'core':
-            return 'Personality: ' + str(personality) + '\nPlayer: ' + str(player) + '\nEngine: ' + str(model_type) + '\nModel: ' + str(model_name_or_path)[:-1] + '\nHardware: ' + str(device)
+            return 'Personality: ' + str(personality) + '\nPlayer: ' + str(player) + '\nEngine: ' + str(config['model_type']) + '\nModel: ' + str(config['model_name_or_path'])[:-1] + '\nHardware: ' + str(device)
         elif command == 'globalhistory':
             return current_history
         elif command == 'userstatus':
@@ -88,6 +92,6 @@ def firewall(cur_input):
         except:
             response = [response, '']
         if response[0] in cur_input and response[1] in cur_input:
-            print('Banned message intercepted! Message: ' + cur_input)
+            logger.info('Banned message intercepted! Message: ' + cur_input)
             return responses_to_banned_inputs[random.randrange(len(responses_to_banned_inputs)-1)] + '\n(Message Blocked.)'
     return cur_input

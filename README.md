@@ -16,11 +16,10 @@ Not currently available.
 socket.sendall(b'userid://message')
 data = sock.recv(16384)
 print(data)
->>> 'How are you?'
+>>> 'response'
 ```
 userid is used to enable holding a conversation with multiple people, while remembering the context of the conversation.
 ### Telegram Integration
-*Currently Deprecated*
 Use exo-telegram.py, along with a [bot API token](https://t.me/botfather), to host your AI on Telegram.
 ### Discord Integration
 Use exo-discord.py, along with a [bot API token](https://discord.com/developers/applications), to host your AI on discord.

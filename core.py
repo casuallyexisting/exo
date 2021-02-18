@@ -26,7 +26,7 @@ import time
 import json
 import socket
 import threading
-from utils.intercept import sudoer, firewall
+from intercept import sudoer, firewall
 from transformers import (
     GPT2LMHeadModel,
     GPT2Tokenizer,
@@ -127,7 +127,8 @@ def chat(custom_input, user_id):
         return "Permission Denied."
 
     if user_status[user_id]['debug']:
-        sudone = sudoer(cur_input, user_id)
+        logger.info('Sudoer ran command: ' + cur_input)
+        sudone = sudoer(cur_input, user_id, user_status, current_history, personality, player, config, operators, device)
         if isinstance(sudone, list):
             if sudone[0] == 'debug':
                 cur_input = sudone[1]
@@ -237,8 +238,10 @@ def manage_client(client_socket):
         request = request.split('://', 1)
         client_socket.send(chat(request[1], request[0]).encode('utf-8'))
         client_socket.close()
-    except:
-        logger.warning('Client Disconnected.')
+        torch.cuda.empty_cache()
+    except Exception as e:
+        logger.warning(e)
+        logger.info('Client Disconnected.')
 
 logger.info('Ready for connections.')
 while True:
