@@ -60,6 +60,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 n_gpu = torch.cuda.device_count()
 
 logging.debug('Using device ' + str(device))
+if device == "cpu":
+    logging.warning('Using CPU, output will be slow.')
 
 # Set seed
 np.random.seed(42)
