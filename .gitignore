@@ -3,10 +3,6 @@
 # Personal Information
 config/generation_config.json
 config/rxConfig.json
-modelCreation/config/training_config.json
-modelCreation/depot/*.csv
-modelCreation/depot/output/
-modelCreation/depot/GoogleTextForm/
 
 # Models
 old_models/

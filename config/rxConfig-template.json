@@ -1,0 +1,16 @@
+{
+  "coreConfig": {
+      "custom_player": "<Custom Player>",
+      "sudoers": ["<Admin User IDs>"],
+      "operators": ["<Operator User IDs>"]
+  },
+
+    "telegram_config": {
+      "telegram-token": "<Telegram Bot Token>",
+      "botupdates": "<Telegram Bot Updates Channel (Starts with a '-')>"
+    },
+
+    "discord_config": {
+      "token": "<Discord Bot Token>"
+    }
+}
