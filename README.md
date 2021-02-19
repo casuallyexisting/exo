@@ -15,6 +15,8 @@ Clone the repository and modify the config files found in 'config/'
 - If using Telegram and/or Discord, set the token values while setting up the bot in the 'Usage' section.
 
 ## Usage
+### The Main AI
+'core.py' is the file that runs the model itself. To interface with the model, this file must be running alongside the interface.
 ### Terminal Access
 Run 'interfaces/exo-terminal.py' to open a chat in the terminal with the AI. This uses the user ID 'TERMINAL'.
 ### Telegram Integration
