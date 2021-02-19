@@ -27,8 +27,13 @@ A good guide for setting up a discord bot can be found [here](https://realpython
 ### Custom Integration
 - Connect to socket at address 127.0.0.1 on port 25077
 ```python
-socket.sendall(b'userid://message')
+import socket
+sock = socket.socket()
+sock.connect(("127.0.0.1", 25077))
+sock.sendall(b'userid://message')
 data = sock.recv(16384)
+data = data.decode()
+sock.close()
 print(data)
 >>> 'response'
 ```
@@ -40,6 +45,3 @@ Contributing is greatly appreciated, please contact one of the team members to g
 #### Core
 - Add response ranking via a point system
 - Add sentiment analysis for proper emotions
-#### Window Engine
-- Finish the vocal engine
-- Integrate all parts into a seamless user experience
