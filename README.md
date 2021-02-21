@@ -41,7 +41,11 @@ print(data)
 ## Contributing
 Contributing is greatly appreciated, please contact one of the team members to get started working on the codebase.
 
-## Todo
+## More information
+### Recent Changes
+- Added user timeout, history and user status get cleared after 10 minutes.
+
+### Todo
 #### Core
 - Add response ranking via a point system
 - Add sentiment analysis for proper emotions

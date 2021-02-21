@@ -105,10 +105,25 @@ logger.debug('Socket {}:{} open.'.format(torrent_address, torrent_port))
 def chat(custom_input, user_id):
     global current_history
     prompt_text = ''
+
+    current_timeout = datetime.now()
+    deletion_queue = []
+    for user in user_status:
+        try:
+            if current_timeout.minute - user_status[user]['timeout'] >= 10:
+                deletion_queue.append(user)
+                logger.info('User ' + user + ' Inactive, clearing.')
+        except:
+            pass
+    for user in deletion_queue:
+        del user_status[user]
+        del current_history[user]
+
     try:
         temp = user_status[user_id]['status']
     except:
-        user_status[user_id] = {'debug':False, 'status': 'normal'}
+        set_timeout = datetime.now()
+        user_status[user_id] = {'debug':False, 'status': 'normal', 'timeout': set_timeout.minute}
 
     if user_status[user_id]['debug']:
         logging.debug('[' + user_id + ' > Sudoer] ' + custom_input)
